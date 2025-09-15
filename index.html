@@ -36,7 +36,23 @@
             $("body").css("background", "linear-gradient(to bottom, #14203a, #1a2d4a 20%, #23518c 100%, #3578c7 60%)");
             $("#newsletter-form").submit(function(e) {
                 e.preventDefault();
-                alert("Thank you for subscribing to our newsletter!");
+                // Show a non-blocking toast at the top instead of bottom
+                let toast = document.getElementById('newsletter-toast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'newsletter-toast';
+                    toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#323232;color:#fff;padding:12px 16px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:9999;opacity:0;transform:translateY(-10px);transition:opacity .3s,transform .3s;';
+                    document.body.appendChild(toast);
+                }
+                toast.textContent = 'Thanks for subscribing! Please check your mail.';
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateY(0)';
+                });
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-10px)';
+                }, 2500);
                 this.reset();
             });
         });
@@ -126,7 +142,7 @@
 
     <div class="newsletter">
         <h2>Subscribe to Our Newsletter</h2>
-        <p>Get updates about new products and special offers!</p>
+        <p><>Get updates about new products and special offers!</p>
         <form id="newsletter-form" class="newsletter-form">
             <input type="email" placeholder="Enter your email" required>
             <button type="submit">Subscribe</button>
@@ -154,7 +170,24 @@
         function addtoc(productName, price) {
             cart.push({ name: productName, price: price });
             updateCart();
-            alert("Item added to cart successfully!");
+            // Show non-blocking toast (same as newsletter)
+            let toast = document.getElementById('newsletter-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'newsletter-toast';
+                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#323232;color:#fff;padding:12px 16px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:9999;opacity:0;transform:translateY(-10px);transition:opacity .3s,transform .3s;';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = 'Item added to cart successfully!';
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            });
+            clearTimeout(toast.dismissTimer);
+            toast.dismissTimer = setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+            }, 2500);
         }
 
         function updateCart() {
@@ -192,7 +225,24 @@
 
         function checkout() {
             if (cart.length === 0) {
-                alert("Your cart is empty!");
+                 // Show non-blocking toast (same as newsletter)
+            let toast = document.getElementById('newsletter-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'newsletter-toast';
+                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#323232;color:#fff;padding:12px 16px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:9999;opacity:0;transform:translateY(-10px);transition:opacity .3s,transform .3s;';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = 'Cart is empty!';
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            });
+            clearTimeout(toast.dismissTimer);
+            toast.dismissTimer = setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+            }, 2500);
                 return;
             }
             // Redirect to the order page with total as a query parameter
