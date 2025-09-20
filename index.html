@@ -182,6 +182,397 @@
       </div>
     </div>
 
+    <div class="container" id="chatbot">
+      <button
+        id="chatbot-launcher"
+        aria-label="Open chat" onclick="(function(){const c=prompt('Enter 1 to go to the promotions page, or 2 to open chat and add an item via the chat input:'); if(!c) return; if(c.trim()==='1'){window.location.href='sale.html';} else if(c.trim()==='2'){ if(window.HWChatbot) window.HWChatbot.open(); setTimeout(()=>{ const inp=document.getElementById('chatbot-input'); const msgs=document.getElementById('chatbot-messages'); if(msgs){ const m=document.createElement('div'); m.className='chatbot-message bot'; const b=document.createElement('div'); b.className='chatbot-bubble'; b.textContent='Type the product name here to add it to your cart (e.g. \"Monster Truck\").'; m.appendChild(b); msgs.appendChild(m); msgs.scrollTop=msgs.scrollHeight; } if(inp){ inp.value=''; inp.focus(); } },200); } })()"
+        title="Chat with HOT Wheels Assistant"
+      >
+        💬
+      </button>
+
+      <div class="chatbot-widget" id="chatbot-widget" aria-hidden="false">
+        <div class="chatbot-header">
+          <span>HOT Wheels Assistant</span>
+          <button id="chatbot-toggle" aria-label="Toggle chat">✕</button>
+        </div>
+        <div
+          class="chatbot-messages"
+          id="chatbot-messages"
+          role="log"
+          aria-live="polite"
+        ></div>
+        <form id="chatbot-form" class="chatbot-form" autocomplete="off">
+          <input
+            id="chatbot-input"
+            type="text"
+            placeholder="Ask about products, shipping, offers..."
+            required
+          />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+
+      <style>
+        /* launcher button */
+        #chatbot-launcher {
+          position: fixed;
+          right: 24px;
+          bottom: 24px;
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          background: linear-gradient(90deg, #8b0000, #b22222);
+          color: #fff;
+          border: none;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+          cursor: pointer;
+          font-size: 22px;
+          z-index: 9998;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        /* widget base */
+        .chatbot-widget {
+          position: fixed;
+          right: 20px;
+          bottom: 20px;
+          width: 320px;
+          max-height: 420px;
+          display: flex;
+          flex-direction: column;
+          background: #ffffff;
+          border-radius: 10px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          font-family: "Poppins", sans-serif;
+          z-index: 9999;
+          transform: translateY(12px);
+          opacity: 0;
+          transition: opacity 0.22s ease, transform 0.22s ease;
+          pointer-events: none;
+        }
+        .chatbot-widget[aria-hidden="false"] {
+          transform: translateY(0);
+          opacity: 1;
+          pointer-events: auto;
+        }
+        .chatbot-header {
+          background: linear-gradient(90deg, #8b0000, #b22222);
+          color: #fff;
+          padding: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-weight: 600;
+        }
+        .chatbot-header button {
+          background: transparent;
+          border: none;
+          color: #fff;
+          font-size: 16px;
+          cursor: pointer;
+        }
+        .chatbot-messages {
+          padding: 12px;
+          overflow-y: auto;
+          flex: 1 1 auto;
+          background: linear-gradient(180deg, #f7f9fc, #eef6ff);
+        }
+        .chatbot-form {
+          display: flex;
+          gap: 8px;
+          padding: 10px;
+          border-top: 1px solid #eee;
+          background: #fff;
+        }
+        .chatbot-form input {
+          flex: 1;
+          padding: 8px 10px;
+          border-radius: 6px;
+          border: 1px solid #ddd;
+          outline: none;
+        }
+        .chatbot-form button {
+          background: #23518c;
+          color: #fff;
+          border: none;
+          padding: 8px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .chatbot-message {
+          margin-bottom: 10px;
+          display: flex;
+          gap: 8px;
+          align-items: flex-end;
+        }
+        .chatbot-message.bot {
+          justify-content: flex-start;
+        }
+        .chatbot-message.user {
+          justify-content: flex-end;
+        }
+        .chatbot-bubble {
+          max-width: 75%;
+          padding: 8px 12px;
+          border-radius: 12px;
+          font-size: 14px;
+          line-height: 1.3;
+        }
+        .chatbot-message.bot .chatbot-bubble {
+          background: #eef2ff;
+          color: #111;
+          border-bottom-left-radius: 4px;
+        }
+        .chatbot-message.user .chatbot-bubble {
+          background: #23518c;
+          color: #fff;
+          border-bottom-right-radius: 4px;
+        }
+        .chatbot-suggest {
+          margin-top: 6px;
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+        .chatbot-suggest button {
+          background: #fff;
+          border: 1px solid #ddd;
+          padding: 6px 8px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        @media (max-width: 400px) {
+          .chatbot-widget {
+            right: 10px;
+            left: 10px;
+            width: auto;
+          }
+          #chatbot-launcher {
+            right: 12px;
+            bottom: 12px;
+          }
+        }
+      </style>
+
+      <script>
+        (function () {
+          const widget = document.getElementById("chatbot-widget");
+          const toggle = document.getElementById("chatbot-toggle");
+          const messages = document.getElementById("chatbot-messages");
+          const form = document.getElementById("chatbot-form");
+          const input = document.getElementById("chatbot-input");
+          const launcher = document.getElementById("chatbot-launcher");
+
+          const HISTORY_KEY = "hw_chat_history_v1";
+          const OPEN_KEY = "hw_chat_open_v1";
+
+          // load history
+          let history = [];
+          try {
+            history = JSON.parse(sessionStorage.getItem(HISTORY_KEY) || "[]");
+          } catch (e) {
+            history = [];
+          }
+          history
+            .slice(-20)
+            .forEach((m) => renderMessage(m.sender, m.text, false));
+
+          // restore open state
+          const wasOpen = sessionStorage.getItem(OPEN_KEY) === "1";
+          setOpenState(Boolean(wasOpen), false);
+
+          if (!history.length && !wasOpen) {
+            // initial greeting stored to history but not auto-open
+            respond(
+              "bot",
+              "Hi! I'm the HOT Wheels Assistant. Ask about products, prices, shipping or type 'help'."
+            );
+          }
+
+          launcher.addEventListener("click", () => setOpenState(true, true));
+          toggle.addEventListener("click", () => setOpenState(false, true));
+
+          // keyboard: Esc to close, Ctrl/Cmd+K to open
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") setOpenState(false, true);
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+              e.preventDefault();
+              setOpenState(true, true);
+              input.focus();
+            }
+          });
+
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const text = input.value.trim();
+            if (!text) return;
+            renderMessage("user", text, true);
+            input.value = "";
+            handleUserMessage(text);
+          });
+
+          function setOpenState(open, save) {
+            widget.setAttribute("aria-hidden", String(!open));
+            widget.style.display = open ? "flex" : "none";
+            launcher.style.display = open ? "none" : "flex";
+            if (open) {
+              messages.scrollTop = messages.scrollHeight;
+              input.focus();
+            }
+            if (save) sessionStorage.setItem(OPEN_KEY, open ? "1" : "0");
+          }
+
+          function saveToHistory(sender, text) {
+            history.push({ sender, text, t: Date.now() });
+            sessionStorage.setItem(
+              HISTORY_KEY,
+              JSON.stringify(history.slice(-50))
+            );
+          }
+
+          function renderMessage(sender, text, shouldScroll) {
+            const wrap = document.createElement("div");
+            wrap.className =
+              "chatbot-message " + (sender === "user" ? "user" : "bot");
+            const bubble = document.createElement("div");
+            bubble.className = "chatbot-bubble";
+            bubble.textContent = text;
+            wrap.appendChild(bubble);
+            messages.appendChild(wrap);
+            if (shouldScroll !== false)
+              messages.scrollTop = messages.scrollHeight;
+            saveToHistory(sender, text);
+          }
+
+          function respond(sender, text) {
+            setTimeout(() => renderMessage(sender, text, true), 220);
+          }
+
+          function handleUserMessage(text) {
+            const t = text.toLowerCase();
+
+            const products = [
+              {
+                k: "die-cast",
+                name: "Die-cast vehicle",
+                price: 899,
+                key: "die-cast",
+              },
+              {
+                k: "monster",
+                name: "Monster Truck",
+                price: 299,
+                key: "monster",
+              },
+              { k: "rc", name: "RC Cars", price: 399, key: "rc" },
+              {
+                k: "collector",
+                name: "Collector",
+                price: 399,
+                key: "collector",
+              },
+              {
+                k: "vintage",
+                name: "Vintage Collection",
+                price: 399,
+                key: "vintage",
+              },
+            ];
+
+            if (/(hi|hello|hey)\b/.test(t))
+              return respond(
+                "bot",
+                "Hello! How can I help today? Try: 'show sale', 'cart', or ask about a product name."
+              );
+            if (t.includes("help"))
+              return respond(
+                "bot",
+                "You can ask: 'Show sale', 'What are your hours?', 'shipping', or the product name (e.g. 'Monster Truck')."
+              );
+            if (
+              t.includes("sale") ||
+              t.includes("offer") ||
+              t.includes("discount")
+            )
+              return respond(
+                "bot",
+                "Current Summer Madness Sale: Flat 40% OFF selected items. See the banner or shop section."
+              );
+            if (t.includes("hours") || t.includes("open"))
+              return respond(
+                "bot",
+                "We're online 24/7 for browsing. Orders are processed during business hours (Mon-Fri, 9am-6pm)."
+              );
+            if (t.includes("shipping"))
+              return respond(
+                "bot",
+                "We provide standard and express shipping. Shipping cost depends on location and cart weight at checkout."
+              );
+            if (t.includes("cart") || t.includes("checkout"))
+              return respond(
+                "bot",
+                "Open your cart using the 🛒 icon at the top-right. When ready, click PLACE ORDER."
+              );
+            if (/thank|thanks/.test(t))
+              return respond(
+                "bot",
+                "You're welcome! Anything else I can help with?"
+              );
+
+            for (const p of products) {
+              if (t.includes(p.k) || t.includes(p.name.toLowerCase())) {
+                respond(
+                  "bot",
+                  `${p.name} — ₹${p.price}. Click to add to cart.`
+                );
+                setTimeout(() => {
+                  const btn = document.createElement("button");
+                  btn.textContent = `Add ${p.name} to cart`;
+                  btn.className = "chatbot-suggest-btn";
+                  btn.style.cursor = "pointer";
+                  btn.addEventListener("click", () => {
+                    if (typeof addtoc === "function") {
+                      addtoc(p.name, p.price);
+                      respond("bot", `${p.name} added to cart.`);
+                    } else {
+                      respond(
+                        "bot",
+                        "Add-to-cart not available here. Please use the product listing."
+                      );
+                    }
+                  });
+                  const container = document.createElement("div");
+                  container.className = "chatbot-suggest";
+                  container.appendChild(btn);
+                  messages.appendChild(container);
+                  messages.scrollTop = messages.scrollHeight;
+                }, 300);
+                return;
+              }
+            }
+
+            respond(
+              "bot",
+              "I didn't catch that. Try asking about a product name (e.g. 'RC Cars') or type 'help'."
+            );
+          }
+
+          window.HWChatbot = {
+            send: (txt) => {
+              setOpenState(true, true);
+              renderMessage("user", txt, true);
+              handleUserMessage(txt);
+            },
+            open: () => setOpenState(true, true),
+            close: () => setOpenState(false, true),
+          };
+        })();
+      </script>
+    </div>
+
     <div class="newsletter">
       <h2>Subscribe to Our Newsletter</h2>
       <p><>Get updates about new products and special offers!</p>
